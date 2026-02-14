@@ -10,7 +10,7 @@ export default function Dashboard() {
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
 
- /* useEffect(() => {
+  useEffect(() => {
     let channel: any;
 
     const setup = async () => {
@@ -61,75 +61,7 @@ export default function Dashboard() {
         supabase.removeChannel(channel);
       }
     };
-  }, []);*/
-
-  useEffect(() => {
-  let channel: any;
-
-  const setup = async () => {
-    // ✅ Use getSession instead of getUser
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (!session) {
-      window.location.href = "/login";
-      return;
-    }
-
-    const currentUser = session.user;
-    setUser(currentUser);
-
-    // Initial fetch
-    const { data: initialData } = await supabase
-      .from("bookmarks")
-      .select("*")
-      .eq("user_id", currentUser.id)
-      .order("created_at", { ascending: false });
-
-    setBookmarks(initialData || []);
-
-    // Realtime subscription
-    channel = supabase
-      .channel("realtime-bookmarks")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "bookmarks",
-          filter: `user_id=eq.${currentUser.id}`,
-        },
-        async () => {
-          const { data: updatedData } = await supabase
-            .from("bookmarks")
-            .select("*")
-            .eq("user_id", currentUser.id)
-            .order("created_at", { ascending: false });
-
-          setBookmarks(updatedData || []);
-        }
-      )
-      .subscribe();
-  };
-
-  setup();
-
-  // Listen for logout
-  const {
-    data: { subscription },
-  } = supabase.auth.onAuthStateChange((event, session) => {
-    if (!session) {
-      window.location.href = "/login";
-    }
-  });
-
-  return () => {
-    if (channel) supabase.removeChannel(channel);
-    subscription.unsubscribe();
-  };
-}, []);
-
+  }, []);
 
   const addBookmark = async () => {
     if (!title || !url || !user) return;
