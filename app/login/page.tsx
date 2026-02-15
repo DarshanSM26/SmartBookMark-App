@@ -29,7 +29,7 @@ export default function Login() {
   return (
     <div
       className={`min-h-screen flex items-center justify-center transition-colors duration-300 ${
-        dark ? "bg-gray-900 text-white" : "bg-gray-100 text-black"
+        dark ? "bg-gray-900 text-white" : "bg-gradient-to-br from-purple-400 via-pink-500 to-red-500"
       }`}
     >
       <div className="absolute top-6 right-6">
