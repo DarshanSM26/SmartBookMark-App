@@ -32,22 +32,37 @@ export default function Dashboard() {
 
       // Realtime subscription
       channel = supabase
-        .channel("realtime-bookmarks")
+        .channel(`bookmarks-${currentUser.id}`)
         .on(
           "postgres_changes",
           {
-            event: "*",
+            event: "INSERT",
             schema: "public",
             table: "bookmarks",
             filter: `user_id=eq.${currentUser.id}`,
           },
-          async () => {
+          async (payload) => {
             const { data: updatedData } = await supabase
               .from("bookmarks")
               .select("*")
               .eq("user_id", currentUser.id)
               .order("created_at", { ascending: false });
-
+            setBookmarks(updatedData || []);
+          }
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "DELETE",
+            schema: "public",
+            table: "bookmarks",
+          },
+          async (payload) => {
+            const { data: updatedData } = await supabase
+              .from("bookmarks")
+              .select("*")
+              .eq("user_id", currentUser.id)
+              .order("created_at", { ascending: false });
             setBookmarks(updatedData || []);
           }
         )
@@ -77,7 +92,12 @@ export default function Dashboard() {
   };
 
   const deleteBookmark = async (id: string) => {
-    await supabase.from("bookmarks").delete().eq("id", id);
+    const { error } = await supabase.from("bookmarks").delete().eq("id", id);
+    
+    if (!error) {
+      // Immediately update local state
+      setBookmarks(prev => prev.filter(b => b.id !== id));
+    }
   };
 
   const logout = async () => {
@@ -92,13 +112,13 @@ export default function Dashboard() {
       
       {/* Top Center Form */}
       <div className="max-w-md mx-auto bg-white shadow-xl rounded-lg p-6 mb-8">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">My Bookmarks</h1>
+        <h1 className="text-2xl font-bold text-black mb-6 text-center">My Bookmarks</h1>
         
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+            <label className="block text-sm font-bold text-black mb-2">Title</label>
             <input
-              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-gray-300 rounded-lg p-3 text-black placeholder-black focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Enter title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -106,9 +126,9 @@ export default function Dashboard() {
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">URL</label>
+            <label className="block text-sm font-bold text-black mb-2">URL</label>
             <input
-              className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-gray-300 rounded-lg p-3 text-black placeholder-black focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Enter URL"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
